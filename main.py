@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Read the Excel sheet into a pandas DataFrame
-data = pd.read_excel('NBA_Stats.xlsx')
+data = pd.read_excel('NBA-2022-2023.xlsx')
 
 # Filter the data to include rows where the position is 'C', 'C-F', or 'F-C'
 center_data = data[data['POSITION'].isin(['C', 'C-F', 'F-C'])].copy()
@@ -64,7 +64,7 @@ forward_data['SCORE'] = (
     forward_data['ST'] * weights['STL'] +
     forward_data['TO'] * weights['TO']
 )
-
+league_avg_weighted_score = center_data['SCORE'].mean()
 # Group the data by the opponent team and calculate the average weighted score per game for centers
 center_opponent_stats = center_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
 
@@ -91,7 +91,7 @@ sorted_guard_teams = guard_opponent_stats.sort_values(ascending=False)
 
 # Sort the teams based on their average weighted scores for forwards in descending order
 sorted_forward_teams = forward_opponent_stats.sort_values(ascending=False)
-
+print(f"League Average Against centers: {league_avg_weighted_score:.2f}")
 # Display the team ranking for centers
 print("Rank\tTeam\t\t\tAverage Weighted Score (Centers)")
 for team, avg_score in sorted_center_teams.items():
