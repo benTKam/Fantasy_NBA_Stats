@@ -64,11 +64,41 @@ center_data['SCORE'] = (
 #     forward_data['ST'] * weights['STL'] +
 #     forward_data['TO'] * weights['TO']
 # )
-league_avg_weighted_score_center = center_data['SCORE'].mean()
-# Group the data by the opponent team and calculate the average weighted score per game for centers
-center_opponent_stats = center_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
+# Group the data by the opponent team and whether the player is a starter
+center_opponent_stats = center_data.groupby(['OPPONENT \nTEAM', 'STARTER\n(Y/N)'])['SCORE'].mean()
 
-center_position_multiplier = center_opponent_stats / league_avg_weighted_score_center
+# Calculate the average weighted score per game for centers against starters
+center_starters_avg_score = center_opponent_stats.loc[pd.IndexSlice[:, 'Y']].mean()
+
+# Calculate the average weighted score per game for centers against bench players
+center_bench_avg_score = center_opponent_stats.loc[pd.IndexSlice[:, 'N']].mean()
+
+# Calculate the position multiplier for centers against starters
+center_starters_multiplier = center_starters_avg_score / center_data['SCORE'].mean()
+
+# Calculate the position multiplier for centers against bench players
+center_bench_multiplier = center_bench_avg_score / center_data['SCORE'].mean()
+
+# Sort the teams based on their average weighted scores for centers against starters in descending order
+sorted_center_starters = center_opponent_stats.loc[pd.IndexSlice[:, 'Y']].sort_values(ascending=False)
+team_scores = pd.DataFrame(columns=['Team', 'Starting Score', 'Bench Score'])
+
+# Iterate over the center_opponent_stats DataFrame and populate the team_scores DataFrame
+for team, avg_score_start, avg_score_bench in zip(
+    center_opponent_stats.index.get_level_values('OPPONENT \nTEAM').unique(),
+    center_opponent_stats.loc[pd.IndexSlice[:, 'Y']],
+    center_opponent_stats.loc[pd.IndexSlice[:, 'N']]
+):
+    row = {'Team': team, 'Starting Score': avg_score_start, 'Bench Score': avg_score_bench}
+    team_scores = pd.concat([team_scores, pd.DataFrame([row])], ignore_index=True)
+
+# Export the team_scores DataFrame to an Excel file
+team_scores.to_excel('TeamScores.xlsx', index=False)
+# league_avg_weighted_score_center = center_data['SCORE'].mean()
+# # Group the data by the opponent team and calculate the average weighted score per game for centers
+# center_opponent_stats = center_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
+#
+# center_position_multiplier = center_opponent_stats / league_avg_weighted_score_center
 
 # # Group the data by the opponent team and calculate the average weighted score per game for guards
 # guard_opponent_stats = guard_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
@@ -77,7 +107,7 @@ center_position_multiplier = center_opponent_stats / league_avg_weighted_score_c
 # forward_opponent_stats = forward_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
 
 # Rank the teams based on their average weighted scores for centers
-center_team_ranking = center_opponent_stats.rank(ascending=False)
+# center_team_ranking = center_opponent_stats.rank(ascending=False)
 
 # # Rank the teams based on their average weighted scores for guards
 # guard_team_ranking = guard_opponent_stats.rank(ascending=False)
@@ -86,7 +116,7 @@ center_team_ranking = center_opponent_stats.rank(ascending=False)
 # forward_team_ranking = forward_opponent_stats.rank(ascending=False)
 
 # # Sort the teams based on their average weighted scores for centers in descending order
-sorted_center_teams = center_opponent_stats.sort_values(ascending=False)
+# sorted_center_teams = center_opponent_stats.sort_values(ascending=False)
 #
 # # Sort the teams based on their average weighted scores for guards in descending order
 # sorted_guard_teams = guard_opponent_stats.sort_values(ascending=False)
@@ -95,14 +125,14 @@ sorted_center_teams = center_opponent_stats.sort_values(ascending=False)
 # sorted_forward_teams = forward_opponent_stats.sort_values(ascending=False)
 
 
-print(f"League Average Against centers: {league_avg_weighted_score_center:.2f}")
-# Display the team ranking for centers
-print("Rank\tTeam\t\t\tAverage Weighted Score (Centers)")
-for team, avg_score in sorted_center_teams.items():
-    multiplier = center_position_multiplier[team]
-    print(f"{center_team_ranking[team]}\t{team}\t\t{avg_score:.2f}\t\t{multiplier:.2f}")
-
-print()  # Add a line break between the two rankings
+# print(f"League Average Against centers: {league_avg_weighted_score_center:.2f}")
+# # Display the team ranking for centers
+# print("Rank\tTeam\t\t\tAverage Weighted Score (Centers)")
+# for team, avg_score in sorted_center_teams.items():
+#     multiplier = center_position_multiplier[team]
+#     print(f"{center_team_ranking[team]}\t{team}\t\t{avg_score:.2f}\t\t{multiplier:.2f}")
+#
+# print()  # Add a line break between the two rankings
 
 # # Display the team ranking for guards
 # print("Rank\tTeam\t\t\tAverage Weighted Score (Guards)")
