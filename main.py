@@ -9,18 +9,16 @@ center_data = data[data['POSITION'].isin(['C', 'C-F'])].copy()
 # Filter the data to include rows where the position is 'G'
 guard_data = data[data['POSITION'].isin(['G', 'G-F'])].copy()
 
-# Filter the data to include rows where the position is 'F', 'G-F', or 'F-G'
+# Filter the data to include rows where the position is 'F', 'F-C', or 'F-G'
 forward_data = data[data['POSITION'].isin(['F', 'F-C', 'F-G'])].copy()
-
-
 
 # Define weights for each statistical category
 weights = {
     '3P': 3,
-    '2P': 2,
+    'FG': 2,
     'FT': 1,
     'REB': 1.2,
-    'AST': 1.5,
+    'A': 1.5,
     'BLK': 3,
     'STL': 3,
     'TO': -1
@@ -29,59 +27,33 @@ weights = {
 # Calculate the weighted score for centers
 center_data['SCORE'] = (
     center_data['3P'] * weights['3P'] +
-    center_data['FG'] * weights['2P'] +
+    center_data['FG'] * weights['FG'] +
     center_data['FT'] * weights['FT'] +
     center_data['DR'] * weights['REB'] +
     center_data['OR'] * weights['REB'] +
-    center_data['A'] * weights['AST'] +
+    center_data['A'] * weights['A'] +
     center_data['BL'] * weights['BLK'] +
     center_data['ST'] * weights['STL'] +
     center_data['TO'] * weights['TO']
 )
+center_data = center_data[center_data['MIN'] >= 25]
+# Group the data by the opponent team and calculate the mean score for each position
+center_opponent_stats = center_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
 
-forward_data['SCORE'] = (
-    forward_data['3P'] * weights['3P'] +
-    forward_data['FG'] * weights['2P'] +
-    forward_data['FT'] * weights['FT'] +
-    forward_data['DR'] * weights['REB'] +
-    forward_data['OR'] * weights['REB'] +
-    forward_data['A'] * weights['AST'] +
-    forward_data['BL'] * weights['BLK'] +
-    forward_data['ST'] * weights['STL'] +
-    forward_data['TO'] * weights['TO']
-)
+# Calculate the average points, offensive rebounds, defensive rebounds, blocks, assists, turnovers, and steals given up to a center for each team
+team_stats = center_data.groupby('OPPONENT \nTEAM')[['3P', 'FG', 'FT', 'OR', 'DR', 'BL', 'A', 'TO', 'ST']].mean()
 
-guard_data['SCORE'] = (
-    guard_data['3P'] * weights['3P'] +
-    guard_data['FG'] * weights['2P'] +
-    guard_data['FT'] * weights['FT'] +
-    guard_data['DR'] * weights['REB'] +
-    guard_data['OR'] * weights['REB'] +
-    guard_data['A'] * weights['AST'] +
-    guard_data['BL'] * weights['BLK'] +
-    guard_data['ST'] * weights['STL'] +
-    guard_data['TO'] * weights['TO']
-)
+# Calculate the league average for each statistical category
+league_avg_stats = center_data[['3P', 'FG', 'FT', 'OR', 'DR', 'BL', 'A', 'TO', 'ST']].mean()
 
-center_opponent_stats = center_data.groupby(['OPPONENT \nTEAM'])['SCORE'].mean()
+# Calculate the division of each team's stats by the league average
+team_stats_divided = team_stats.divide(league_avg_stats)
 
-# Group the data by the opponent team and whether the player is a starter for guards
-guard_opponent_stats = guard_data.groupby(['OPPONENT \nTEAM'])['SCORE'].mean()
+# Merge the team_stats_divided DataFrame with the center_opponent_stats DataFrame
+team_scores = pd.merge(team_stats_divided, center_opponent_stats, left_index=True, right_index=True)
 
-# Group the data by the opponent team and whether the player is a starter for forwards
-forward_opponent_stats = forward_data.groupby(['OPPONENT \nTEAM'])['SCORE'].mean()
+# Calculate the average score for each team against the league average score
+team_scores['Center Score vs. League Avg'] = team_scores['SCORE'] / center_opponent_stats.mean()
 
-# Create a list of dictionaries to store team scores
-team_scores = []
-
-for team in data['OPPONENT \nTEAM'].unique():
-    center_score = center_opponent_stats.loc[team]
-    guard_score = guard_opponent_stats.loc[team]
-    forward_score = forward_opponent_stats.loc[team]
-    team_scores.append({'Team': team, 'Center Score': center_score, 'Guard Score': guard_score, 'Forward Score': forward_score})
-
-# Create a DataFrame from the list of dictionaries
-team_scores_df = pd.DataFrame(team_scores)
-print(team_scores_df)
 # Export the team_scores DataFrame to an Excel file
-team_scores_df.to_excel('TeamScores.xlsx', index=False)
+team_scores.to_excel('CenterVsLeague.xlsx', index=True)
