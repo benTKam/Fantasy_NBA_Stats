@@ -1,6 +1,6 @@
 import pandas as pd
 
-nba_data_path = 'STATIC SHEETS/NBA-2022-2023.xlsx'
+nba_data_path = 'NBA-2022-2023.xlsx'
 nba_data = pd.read_excel(nba_data_path)
 
 # Specify the player's name
