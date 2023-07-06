@@ -1,14 +1,14 @@
 import pandas as pd
 
 # Load team file
-team_file_path = 'CenterVsLeague.xlsx'
+team_file_path = 'PlayerStats/CenterVsLeague.xlsx'
 team_data = pd.read_excel(team_file_path)
 
 # Remove the line break character from the column header
 
 
 # Load player file
-player_file_path = 'CentersPerGameTotals.xlsx'
+player_file_path = 'PlayerStats/CentersPerGameTotals.xlsx'
 player_data = pd.read_excel(player_file_path)
 
 # Specify the player's name

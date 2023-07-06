@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Load actual scores file
-actual_scores_file = 'PlayerAverageScores.xlsx'
+actual_scores_file = 'PlayerStats/PlayerAverageScores.xlsx'
 actual_scores_data = pd.read_excel(actual_scores_file)
 
 # Load predicted stats file
