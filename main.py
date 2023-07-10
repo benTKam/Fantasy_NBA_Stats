@@ -1,7 +1,7 @@
 import pandas as pd
 
 # Read the Excel sheet into a pandas DataFrame
-data = pd.read_excel('PlayerStats/NBA-2022-2023.xlsx')
+data = pd.read_excel('NBA-2022-2023.xlsx')
 
 # Filter the data to include rows where the position is 'C', 'C-F', or 'F-C'
 center_data = data[data['POSITION'].isin(['C', 'C-F'])].copy()
@@ -36,7 +36,7 @@ center_data['SCORE'] = (
     center_data['ST'] * weights['STL'] +
     center_data['TO'] * weights['TO']
 )
-center_data = center_data[center_data['MIN'] >= 25]
+center_data = center_data[center_data['MIN'] >= 30]
 # Group the data by the opponent team and calculate the mean score for each position
 center_opponent_stats = center_data.groupby('OPPONENT \nTEAM')['SCORE'].mean()
 
@@ -56,4 +56,4 @@ team_scores = pd.merge(team_stats_divided, center_opponent_stats, left_index=Tru
 team_scores['Center Score vs. League Avg'] = team_scores['SCORE'] / center_opponent_stats.mean()
 
 # Export the team_scores DataFrame to an Excel file
-team_scores.to_excel('CenterVsLeague.xlsx', index=True)
+team_scores.to_excel('TeamStats/CenterVsLeague.xlsx', index=True)
